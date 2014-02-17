@@ -52,25 +52,31 @@ class Authorization():
         params = [
             (param, self.params[param])
             if param in self.params else
-            (param, getattr(self, 'get_{}'.format(param))())
+            (param, getattr(self, 'gen_{}'.format(param))())
             for param in required_params
         ]
         return params
 
-    def get_oauth_timestamp(self):
-        return str(int(time.time()))
 
-    def get_oauth_nonce(self):
-        return str(int(random.getrandbits(64)))
+    def get_auth_params(self, url, params, method='GET'):
+        auth_params = self.get_params()
+        params = sorted(params + auth_params)
+        signature = self.get_signature(url, params, method)
+        auth_params += [('oauth_signature', signature.decode('utf-8'))]
+        return auth_params
 
-    def request(self, params=None):
-        if not params: params = []
-        return params + self.get_params()
+    def authorization_header(self, auth_params):
+        """ Authorization: Oauth oauth_foo="bar", auth_baz="..."""
+        t = '{k}="{v}"'
+        q = partial(urllib.parse.quote, safe='')
+        return 'OAuth ' + ', '.join(t.format(k=k, v=q(v)) for (k, v) in auth_params)
+
 
     def set_key(self, key):
         self.key = key
 
     def get_signature(self, url, params, method):
+        params = sorted(params)
         url = urllib.parse.quote(url, safe='')
         q = urllib.parse.quote
         params = [(k, q(v)) for (k, v) in params]
@@ -80,6 +86,9 @@ class Authorization():
         return base64.b64encode(
             hmac(self.key, message, sha1).digest()
         )
+
+    def gen_oauth_timestamp(self): return str(int(time.time()))
+    def gen_oauth_nonce(self): return str(int(random.getrandbits(64)))
 
 
 class RequestMachine():
@@ -113,25 +122,15 @@ class RequestMachine():
         default_params = [(k, v) for (k, v) in self.defaults.items()]
         request_params = [(k, v) for (k, v) in params.items()]
         params = default_params + request_params
-        auth_params = self.get_auth_params(url, params)
+        auth_params = self.auth.get_auth_params(url, params)
         return(self._request(url, params, auth_params))
 
-    def authorization_header(self, auth_params):
-        t = '{k}="{v}"'
-        q = partial(urllib.parse.quote, safe='')
-        return 'OAuth ' + ', '.join(t.format(k=k, v=q(v)) for (k, v) in auth_params)
 
-    def get_auth_params(self, url, params, method='GET'):
-        auth_params = auth.get_params()
-        params = sorted(params + auth_params)
-        key = self.auth.get_signature(url, params, method)
-        auth_params += [('oauth_signature', key.decode('utf-8'))]
-        return auth_params
 
     def _request(self, url, params, auth_params):
         headers = {}
         payload = {k: v for (k, v) in params}
-        auth_header = self.authorization_header(auth_params)
+        auth_header = self.auth.authorization_header(auth_params)
         headers["Authorization"] = auth_header
         headers['User-Agent'] = self.user_agent
         headers['Connection'] = 'Keep-Alive'
