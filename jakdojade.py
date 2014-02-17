@@ -8,8 +8,27 @@ import base64
 from functools import partial
 from hashlib import sha1
 import requests
+
+city_to_cid = {
+    'poznan'     : '1000',
+    'wroclaw'    : '2000',
+    'warszawa'   : '3000',
+    'szczecin'   : '4000',
+    'kraków'     : '5000',
+    'łodz'       : '6000',
+    'trojmiasto' : '7000',
+    'bydgoszcz'  : '8000',
+    'torun'      : '8001',
+    'gop'        : '9000',
+    'radom'      : '10000',
+    'bialystok'  : '11000',
+    'lublin'     : '12000',
+}
+
+
 class Authorization():
     key = b'401b0ea412a8120d5fe68aa9d59ed5d0b6ab420b&'
+
     def __init__(self):
         self.params = {
             'oauth_consumer_key': "anonym_ALKL481602142145",
@@ -20,6 +39,7 @@ class Authorization():
 
     def update_param(self, key, value):
         self.params[key] = value
+
     def update_params(self, dict):
         self.params.update(dict)
 
@@ -64,12 +84,22 @@ class Authorization():
 
 class RequestMachine():
     user_agent = 'android'
+
     def __init__(self):
         self.defaults = {
             "devId": "c55698d2-1c3c-41bb-8b8a-e611bdb7df51",
             "user-agent": "Genymotion Custom Phone 7 - 4.4.2 - API 19 - 1024x600 Android 4.4.2",
             "appV": "and_36_free",
-            "locale": "en"
+            "locale": "en",
+            't': 'optimal',
+            'aac': 'false',
+            'aab': 'false',
+            'aax': 'false',
+            'aaz': 'false',
+            'aol': 'false',
+            'aro': '1',
+            'rc': '1',
+            'ia': 'false',
         }
 
     def update_defaults(self, dictionary):
@@ -78,7 +108,8 @@ class RequestMachine():
     def set_auth(self, auth):
         self.auth = auth
 
-    def request(self, url, params):
+    def request(self, url, params=None):
+        if not params: params = {}
         default_params = [(k, v) for (k, v) in self.defaults.items()]
         request_params = [(k, v) for (k, v) in params.items()]
         params = default_params + request_params
@@ -117,21 +148,11 @@ if __name__ == '__main__':
     url = 'http://jakdojade.pl/api/mobile/v2/routes'
     p = {
             'cid': '12000',
-            'rc': '3',
             'ri': '1',
             'fc': '51.23678:22.54831',
-            'fsn': 'Politechnika',
             'tc': '51.228224:22.501976',
             'time': '17.02.14 02:12',
-            'ia': 'false',
-            't': 'optimal',
-            'aac': 'false',
-            'aab': 'false',
-            'aax': 'false',
-            'aaz': 'false',
-            'aol': 'false',
-            'aro': '1',
-            'alt': '2',
+            'alt': '2', # wat
     }
 
     rm = RequestMachine()
