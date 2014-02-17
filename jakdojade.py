@@ -140,19 +140,19 @@ class RequestMachine():
 
 if __name__ == '__main__':
     auth = Authorization()
-    auth.update_params({
-        'oauth_timestamp': "1392595377",
-        'oauth_nonce': "-6650870060017922296"
-    })
+    #auth.update_params({
+        #'oauth_timestamp': "1392595377", # nobody bothers to check this anyway
+        #'oauth_nonce': "-6650870060017922296"
+    #})
 
     url = 'http://jakdojade.pl/api/mobile/v2/routes'
     p = {
-            'cid': '12000',
-            'ri': '1',
-            'fc': '51.23678:22.54831',
-            'tc': '51.228224:22.501976',
-            'time': '17.02.14 02:12',
-            'alt': '2', # wat
+        'cid': city_to_cid['lublin'],
+        'ri': '1',
+        'fc': '51.23678:22.54831',
+        'tc': '51.228224:22.501976',
+        'time': '17.02.14 02:12',
+        'alt': '2',  # wat
     }
 
     rm = RequestMachine()
@@ -160,4 +160,3 @@ if __name__ == '__main__':
 
     derp = rm.request(url, p)
     print(derp.text)
-    import ipdb; ipdb.set_trace()
